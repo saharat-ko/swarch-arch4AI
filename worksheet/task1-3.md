@@ -1,8 +1,8 @@
 # Tutorial 6 worksheet: serving patterns
 
-**Name / ชื่อ:**
+**Name / ชื่อ:** Saharat Kosum
 
-**Student ID / รหัสนิสิต:**
+**Student ID / รหัสนิสิต:** 6870278621
 
 This is **individual work**: each student completes and submits their own copy, in their own fork.
 
@@ -16,72 +16,72 @@ Copy result rows from `results/runs.csv` (or the load test's output) into the ta
 
 | Run | p50 ms | p95 ms | accuracy | large calls |
 |---|---|---|---|---|
-| t0-large | | | | |
-| t0-small | | | | |
+| t0-large | 499 | 605 | 93.5% | 100% |
+| t0-small | 22 | 66 | 72.5% | 0% |
 
 **Q0.** What does the large model buy, and what does it cost?
 
 *large model ให้อะไรเพิ่ม และต้องแลกด้วยอะไร*
 
->
+> large model ให้ accuracy เพิ่มมาประมาณ 20% แต่ต้องแลกกับ time ที่เพิ่มมาประมาณ 10 เท่า
 
 ## Task 1: Fallback prediction (copy the Task 1 results from `results/runs.csv` here / copy ผลลัพธ์ของ Task 1 จาก `results/runs.csv` มาวางที่นี่)
 
 | Run | run time (s) | p50 ms | p95 ms | errors | pending | accuracy |
 |---|---|---|---|---|---|---|
-| t1-before | | | | | | |
-| t1-after | | | | | | |
+| t1-before | 30.3 s | 247 | 426 | 21 | 0 | 92.7% |
+| t1-after | 9.2 s | 390 | 1009 | 0 | 25 | 93.7% |
 
 **Q1.1** In `t1-before`, p50 can look *better* than the baseline. Why is p50 misleading here? Which column tells the real story?
 
 *ใน `t1-before` ค่า p50 อาจดู "ดีกว่า" baseline ทำไม p50 จึงทำให้เข้าใจผิดในกรณีนี้ และ column ไหนบอกความจริง*
 
->
+> เนื่องจาก t1-before คำนวณเฉพาะคำขอที่สำเร็จเท่านั้น ทำให้ p50 ดูดีทั้งที่บาง request มี error และ column ที่บอกความจริงคือ error
 
 **Q1.2** The hang affects only 10% of large-model calls. Why is it worse for the system than 10% of reviews being slow? Think about what a waiting request holds on to in the review service and the gateway.
 
 *การค้างเกิดกับ calls ไปยัง large model แค่ 10% ทำไมจึงส่งผลต่อระบบแย่กว่าการที่รีวิว 10% ช้าลงเฉยๆ ลองคิดว่า request ที่รออยู่ถือทรัพยากรอะไรไว้ใน review service และ gateway*
 
->
+> เพราะว่า request ที่ค้างอยู่ส่งผลต่อ resource ของ service เมื่อ resource เหลือน้อย request อื่นก็ต้องรอตามไปด้วย
 
 **Q1.3** Pending reviews have no label. Suggest what should happen to them, and name the topology from the lecture that does it.
 
 *รีวิวที่ pending ยังไม่มี label ควรจัดการกับรีวิวเหล่านี้อย่างไร และ topology ใดจาก lecture ที่ทำแบบนั้น*
 
->
+> ระบบควรเก็บ pending review ไว้ label ภายหลัง ใช้ topology คือ batch processing
 
 **Q1.4** We chose a 1-second timeout. What goes wrong if it is 0.1 s? And if it is 10 s?
 
 *เราเลือก timeout 1 วินาที จะเกิดปัญหาอะไรถ้าตั้งเป็น 0.1 วินาที และถ้าตั้งเป็น 10 วินาที*
 
->
+> ถ้าใช้เป็น 0.1 วินาทีอาจจะตัด request ที่ทำงานปกติได้เพราะมีบางครั้งที่ใช้เวลาเกิน 0.1 วินาที ถ้าใช้ 10 วินาที request จะใช้เวลานานขึ้นมา และ resource อาจจะไม่พอ ถ้ามีผู้ใช้งานเยอะ
 
 ## Task 2: Cascade (copy the Task 2 results from `results/runs.csv` here / copy ผลลัพธ์ของ Task 2 จาก `results/runs.csv` มาวางที่นี่)
 
 | Run | threshold | p50 ms | p95 ms | accuracy | large calls |
 |---|---|---|---|---|---|
-| t2-0.6 | 0.6 | | | | |
-| t2-0.7 | 0.7 | | | | |
-| t2-0.8 | 0.8 | | | | |
-| t2-0.9 | 0.9 | | | | |
+| t2-0.6 | 0.6 | 7 | 537 | 91.5% | 38% |
+| t2-0.7 | 0.7 | 378 | 575 | 93.0% | 53% |
+| t2-0.8 | 0.8 | 445 | 575 | 93.5% | 64% |
+| t2-0.9 | 0.9 | 468 | 589 | 93.5% | 77% |
 
 **Q2.1** Which threshold would you deploy for CampusEats, and why? Name the quality you give up.
 
 *จะเลือก threshold ใดสำหรับ deploy ใน CampusEats เพราะอะไร และต้องยอมเสีย quality ใดไป*
 
->
+> ใช้ threshold = 0.6 เพราะไวที่สุดและ accuracy ยังผ่านเกณฑ์แต่ต้องแลกกับ accuracy ประมาณ 2%
 
 **Q2.2** Look at p50 and p95 for your threshold. Why does the cascade help p50 much more than p95?
 
 *ดูค่า p50 และ p95 ของ threshold ที่เลือก ทำไม cascade จึงช่วย p50 ได้มากกว่า p95 มาก*
 
->
+> เพราะการรีวิวส่วนใหญ่ใช้ small model ทำให้ p50 ดี
 
 **Q2.3** The cascade trusts the small model's confidence. Give one situation where that trust is misplaced, and its effect on users.
 
 *cascade เชื่อ confidence ของ small model ยกตัวอย่างหนึ่งสถานการณ์ที่ไม่ควรเชื่อ และผลที่เกิดกับผู้ใช้*
 
->
+> ถ้าลูกค้ารีวิว not bad ตัว small model อาจจับคำว่า bad แล้วทำนายว่าเป็นรีวิวเชิงลบด้วย confidence สูง ทั้งที่ทั้งประโยคมีความหมายเชิงบวก ทำให้เจ้าของร้านเข้าใจความเห็นของลูกค้าผิด
 
 ## Task 3: Cached predictions (copy the Task 3 results from `results/runs.csv` here / copy ผลลัพธ์ของ Task 3 จาก `results/runs.csv` มาวางที่นี่)
 
