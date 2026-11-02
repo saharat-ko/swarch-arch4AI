@@ -87,19 +87,19 @@ Copy result rows from `results/runs.csv` (or the load test's output) into the ta
 
 | Run | p50 ms | p95 ms | accuracy | large calls | cache hits |
 |---|---|---|---|---|---|
-| t3-cache | | | | | |
+| t3-cache | 6 | 528 | 93.0% | 38% | 35% |
 
 **Q3.1** Which reviews benefit from the cache, and which never will?
 
 *รีวิวแบบไหนได้ประโยชน์จาก cache และแบบไหนไม่มีวันได้ประโยชน์*
 
->
+> รีวิวที่มีข้อความซ้ำกับคำที่เคยทำนายมาแล้วจะได้ประโยชน์จาก cache แต่ข้อความที่ไม่ซ้ำจะไม่ได้ประโยชน์ เช่น คำที่คนไม่ค่อนใช้กัน
 
 **Q3.2** Next week you deploy a better large model. What must happen to the cache, and how would you design for it?
 
 *สัปดาห์หน้าจะ deploy large model ตัวใหม่ที่ดีกว่าเดิม ต้องทำอะไรกับ cache และจะออกแบบรองรับเรื่องนี้อย่างไร*
 
->
+> จะต้อง clear cache เดิมออกให้หมด และอาจจะผูก model version กับ cache text ถ้า deploy แล้วเป็น model version ใหม่ระบบก็จะไม่ดึงอันเก่าไปใช้
 
 ## Debrief
 
@@ -107,4 +107,4 @@ Copy result rows from `results/runs.csv` (or the load test's output) into the ta
 
 *ยกตัวอย่างหนึ่งสิ่งที่ได้เรียนรู้จากการวัดผลครั้งนี้ ที่ไม่มีพูดถึงใน lecture*
 
->
+> การใช้ large model ตลอด อาจจะให้ accuracy ที่เยอะจริง แต่ก็ต้องแลกกับหลายอย่าง อาจจะยอมลด accuracy นิดหน่อยเพื่อให้ประหยัด time, cost แต่ก็ต้องพิจารณาร่วมกับ business ด้วย

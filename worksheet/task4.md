@@ -1,8 +1,8 @@
 # Task 4: Deployment topologies and trade-offs
 
-**Name / ชื่อ:**
+**Name / ชื่อ:** Saharat Kosum
 
-**Student ID / รหัสนิสิต:**
+**Student ID / รหัสนิสิต:** 6870278621
 
 This is **individual work**: each student completes and submits their own copy, in their own fork.
 
@@ -58,9 +58,9 @@ The three most important quality requirements for your scenario, each with a num
 
 | # | Quality | Requirement |
 |---|---|---|
-| 1 | | |
-| 2 | | |
-| 3 | | |
+| 1 | Availability | tablet ต้องรับรีวิวได้แม้ Wi-Fi หลุดนานหลายนาที |
+| 2 | Reliability | รีวิวที่รับไว้ต้องไม่หาย และเมื่อกลับมาออนไลน์ต้องส่งเข้าระบบได้ครบ |
+| 3 | Accuracy | label ที่เจ้าของร้านได้รับควรถูกต้องอย่างน้อย 90% |
 
 ## 2. Design / การออกแบบ
 
@@ -70,14 +70,24 @@ Your topology, the patterns you add, and a container-level diagram (C4 level 2).
 
 ```mermaid
 C4Container
-    title Your design: container diagram
+    title CampusEats: Scenario B
     %% Replace the example below with your own people, containers and relationships.
     %% See the CampusEats C4 diagram in README.md for the full syntax.
-    Person(customer, "Customer", "Writes restaurant reviews")
+    Person(student, "Customer", "Writes restaurant reviews")
+    Person(owner, "Restaurant owner", "ดู label ของรีวิว")
     System_Boundary(campuseats, "CampusEats") {
-        Container(review, "Review service", "Python, FastAPI", "What it does")
+        Container(tablet, "tablet", "Tablet app, local storage", "รับและเก็บรีวิวตอน offline")
+        Container(gateway, "API gateway", "Python, FastAPI", "รับคำขอจาก tablet และเจ้าของร้าน")
+        Container(review, "Review service", "Python, FastAPI", "เก็บรีวิวและจัดการรีวิวที่รอติด label")
+        Container(inference, "Inference service", "Python, FastAPI", "ติด label ด้วย cascade")
     }
-    Rel(customer, review, "Posts reviews", "HTTP/JSON")
+    Rel(student, tablet, "เขียนรีวิว")
+    Rel(tablet, gateway, "ส่งรีวิวไป server", "HTTP/JSON")
+    Rel(gateway, review, "ส่งต่อรีวิว", "HTTP/JSON")
+    Rel(review, inference, "ส่งรีวิวที่รอติด label", "HTTP/JSON")
+    Rel(inference, review, "ส่ง label กลับ", "HTTP/JSON")
+    Rel(owner, gateway, "ขอดูรีวิว", "HTTP/JSON")
+    Rel(gateway, review, "อ่านรีวิว", "HTTP/JSON")
 ```
 
 ## 3. Evidence / หลักฐาน
@@ -88,7 +98,7 @@ Which runs support your choice? Show the numbers and, for scenario A, the capaci
 
 | Run | What it shows / แสดงอะไร |
 |---|---|
-| | |
+| t2-0.6 | บอกว่า cascade เป็นการ balance ระหว่างเวลาและ accuracy |
 | | |
 
 ## 4. ADR
@@ -97,20 +107,20 @@ Use the ADR format from W5.
 
 *ใช้รูปแบบ ADR จาก W5*
 
-**Title:**
+**Title:** เลือก topology สำหรับ CampusEats
 
 **Status:** Proposed
 
-**Context:**
+**Context:** Tablet ในโรงอาหารอาจขาดการเชื่อมต่อหลายนาที แต่ต้องรับรีวิวทุกครั้ง และเจ้าของร้านต้องเห็น label ภายในสิ้นวัน
 
-**Decision:**
+**Decision:** ใช้ asynchronous / batch ให้ tablet เก็บรีวิวใน local storage เมื่อ offline และ ส่งรีวิวไปเก็บที่ Review service เมื่อกลับมาออนไลน์ แล้วประมวลผลภายหลังด้วย cascade ที่ threshold 0.6
 
 **Consequences:**
-- Positive:
-- Negative:
+- Positive: สามารถรีวิวตอน offline ได้
+- Negative: เจ้าของร้านต้องรอรีวิวที่่มี label ตอนจบวัน
 
 **Alternatives considered:** at least one topology you rejected, and why.
 
 *อย่างน้อยหนึ่ง topology ที่ไม่เลือก และเหตุผล*
 
->
+> synchronous model service เพราะจะมีช่วงที่ offline ทำให้ส่งคำขอไม่ได้ และรีวิวอาจหายได้
